@@ -1,3 +1,25 @@
+# SipNSnack
+
+A React Native mobile application for managing restaurant orders and menus.
+
+## Project Overview
+
+SipNSnack is a mobile application built with React Native that allows users to:
+- Browse restaurant menus
+- Place and manage orders
+- Track order status
+- Manage restaurant inventory and menu items
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+- Node.js (v14 or newer)
+- npm or Yarn
+- React Native CLI
+- Xcode (for iOS development, Mac only)
+- Android Studio (for Android development)
+- Ruby (for iOS development)
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
@@ -66,7 +88,7 @@ This is one way to run your app — you can also build it directly from Android 
 
 Now that you have successfully run the app, let's make changes!
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
 When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
 
@@ -95,3 +117,38 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+## Project Structure
+
+```
+SipNSnack/
+├── src/               # Source files
+├── android/          # Android native files
+├── ios/             # iOS native files
+├── __tests__/       # Test files
+├── App.tsx          # Main application component
+└── package.json     # Project dependencies
+```
+
+## Additional Setup
+
+1. Clone the repository:
+```sh
+git clone <repository-url>
+cd SipNSnack
+```
+
+2. Install dependencies:
+```sh
+npm install
+# or
+yarn install
+```
+
+3. Install iOS dependencies (Mac only):
+```sh
+cd ios
+bundle install
+bundle exec pod install
+cd ..
+```
