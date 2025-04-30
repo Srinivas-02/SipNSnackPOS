@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import {
     TextInput,
@@ -15,6 +15,8 @@ import {
 import { SelectList } from 'react-native-dropdown-select-list';
 import { RootStackParamList } from '../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import api from '../common/api'
+import useLocationStore from '../store/location'
 
 // Location data with their corresponding passwords
 const LOCATIONS = [
@@ -48,12 +50,24 @@ const LOCATIONS = [
 
 
 const Login = () => {
+    const locations = useLocationStore((state) => state.locations);
+    const setLocations = useLocationStore((state) => state.setLocations);
     const [selectedLocation, setSelectedLocation] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [error, setError] = useState('');
     const passwordRef = React.useRef<TextInput>(null);
-
+    useEffect(() => {
+        const fetchLocations = async () => {
+            try {
+                const response = await api.get('/locations/');
+                console.log(response.data);
+            } catch (error) {
+                console.error('Error fetching locations:', error);
+            }
+        };
+        fetchLocations();
+    }, []);
     const validateLocation = () => {
         if (!selectedLocation || selectedLocation === 'select') {
             setError('Please select a location');
