@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View, Animated, Easing, useWindowDimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../common/NavigationStack';
+import { RootStackParamList } from '../types/navigation'
 
 const Logo = require('../assets/Logo.png');
 
@@ -59,7 +59,7 @@ const LogoSplash = () => {
 
     // Navigate to Login screen after animation
     const navigationTimeout = setTimeout(() => {
-      navigation.replace('Login');
+      navigation.replace('LocationLogin');
     }, 2800); // Increased duration to accommodate new animations
 
     return () => clearTimeout(navigationTimeout);

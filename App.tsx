@@ -1,7 +1,8 @@
 import React from 'react';
 import LogoSplash from './src/screens/LogoSplash';
-import Login from './src/screens/Login';
+import LocationLogin from './src/screens/LocationLogin';
 import Home from './src/screens/Home';
+import StaffLogin from './src/screens/StaffLogin';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/types/navigation';
@@ -25,8 +26,15 @@ const App = () => {
           }}
         />
         <Stack.Screen
-          component={Login}
-          name="Login"
+          component={LocationLogin}
+          name="LocationLogin"
+          options={{
+            animation: 'fade',
+          }}
+        />
+        <Stack.Screen
+          component={StaffLogin}
+          name="StaffLogin"
           options={{
             animation: 'fade',
           }}

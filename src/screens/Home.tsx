@@ -1,77 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Alert } from 'react-native';
 import MenuOverlay from '../components/MenuOverlay';
+import useMenuStore from '../store/menu';
+import api from '../common/api';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+// Add this at the very top of the file to fix the linter error for the icon import
+// @ts-ignore
+// eslint-disable-next-line
+declare module 'react-native-vector-icons/MaterialCommunityIcons';
+
 // Types
 interface MenuItem {
-  id: string;
+  id: number;
   name: string;
   price: number;
   category: string;
+  location_id: number;
 }
 
 interface CartItem extends MenuItem {
   quantity: number;
 }
 
-// Mock data - In real app, this would come from an API
-const MENU_CATEGORIES = [
-  'Tiffins',
-  'Lunch',
-  'Drinks',
-  'Cafe',
-  'Desserts',
-];
-const MENU_ITEMS: MenuItem[] = [
-  // Tiffins
-  { id: '1', name: 'Dosa', price: 60, category: 'Tiffins' },
-  { id: '2', name: 'Idli', price: 40, category: 'Tiffins' },
-  { id: '3', name: 'Vada', price: 35, category: 'Tiffins' },
-  { id: '4', name: 'Upma', price: 45, category: 'Tiffins' },
-  { id: '5', name: 'Pongal', price: 50, category: 'Tiffins' },
-
-  // Lunch
-  { id: '6', name: 'Biryani', price: 120, category: 'Lunch' },
-  { id: '7', name: 'Butter Chicken', price: 150, category: 'Lunch' },
-  { id: '8', name: 'Paneer Tikka', price: 130, category: 'Lunch' },
-  { id: '9', name: 'Dal Makhani', price: 100, category: 'Lunch' },
-  { id: '10', name: 'Naan', price: 30, category: 'Lunch' },
-
-  // Drinks
-  { id: '11', name: 'Masala Chai', price: 25, category: 'Drinks' },
-  { id: '12', name: 'Lassi', price: 40, category: 'Drinks' },
-  { id: '13', name: 'Mango Shake', price: 60, category: 'Drinks' },
-  { id: '14', name: 'Buttermilk', price: 20, category: 'Drinks' },
-  { id: '15', name: 'Fresh Lime Soda', price: 30, category: 'Drinks' },
-
-  // Cafe
-  { id: '16', name: 'Espresso', price: 40, category: 'Cafe' },
-  { id: '17', name: 'Cappuccino', price: 50, category: 'Cafe' },
-  { id: '18', name: 'Latte', price: 60, category: 'Cafe' },
-  { id: '19', name: 'Green Tea', price: 35, category: 'Cafe' },
-  { id: '20', name: 'Hot Chocolate', price: 55, category: 'Cafe' },
-
-  // Desserts
-  { id: '21', name: 'Gulab Jamun', price: 45, category: 'Desserts' },
-  { id: '22', name: 'Rasmalai', price: 50, category: 'Desserts' },
-  { id: '23', name: 'Ice Cream', price: 60, category: 'Desserts' },
-  { id: '24', name: 'Kheer', price: 40, category: 'Desserts' },
-  { id: '25', name: 'Jalebi', price: 35, category: 'Desserts' },
-];
-
 const Home = () => {
-  const [selectedCategory, setSelectedCategory] = useState(MENU_CATEGORIES[0]);
+  const categories = useMenuStore((state) => state.categories);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-
-  const filteredItems = MENU_ITEMS.filter(item => item.category === selectedCategory);
-
+  const [loading, setLoading] = useState(false);
+  // Find menu items for the selected category
+  const filteredItems =
+    categories.find((cat) => cat.name === selectedCategory)?.menu_items || [];
+  useEffect(()=>{
+    setSelectedCategory(categories[0].name)
+  })
   const addToCart = (item: MenuItem) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(cartItem => cartItem.id === item.id);
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((cartItem) => cartItem.id === item.id);
       if (existingItem) {
-        return prevItems.map(cartItem =>
+        return prevItems.map((cartItem) =>
           cartItem.id === item.id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
@@ -81,17 +50,17 @@ const Home = () => {
     });
   };
 
-  const removeFromCart = (itemId: string) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === itemId);
+  const removeFromCart = (itemId: number) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((item) => item.id === itemId);
       if (existingItem && existingItem.quantity > 1) {
-        return prevItems.map(item =>
+        return prevItems.map((item) =>
           item.id === itemId
             ? { ...item, quantity: item.quantity - 1 }
             : item
         );
       }
-      return prevItems.filter(item => item.id !== itemId);
+      return prevItems.filter((item) => item.id !== itemId);
     });
   };
 
@@ -107,7 +76,7 @@ const Home = () => {
   };
 
   const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   return (
@@ -136,20 +105,22 @@ const Home = () => {
           contentContainerStyle={styles.categoriesBarContent}
           showsHorizontalScrollIndicator={false}
         >
-          {MENU_CATEGORIES.map(category => (
+          {categories.map((category) => (
             <TouchableOpacity
-              key={category}
+              key={category.id}
               style={[
                 styles.categoryButton,
-                selectedCategory === category && styles.selectedCategory,
+                selectedCategory === category.name && styles.selectedCategory,
               ]}
-              onPress={() => setSelectedCategory(category)}
+              onPress={() => setSelectedCategory(category.name)}
             >
-              <Text style={[
-                styles.categoryText,
-                selectedCategory === category && styles.selectedCategoryText,
-              ]}>
-                {category}
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category.name && styles.selectedCategoryText,
+                ]}
+              >
+                {category.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -158,37 +129,62 @@ const Home = () => {
 
       {/* Menu Items Area */}
       <View style={styles.menuContainer}>
-        <FlatList
-          data={filteredItems}
-          numColumns={3}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => addToCart(item)}
-            >
-              <Text style={styles.menuItemName}>{item.name}</Text>
-              <Text style={styles.menuItemPrice}>₹{item.price}</Text>
-            </TouchableOpacity>
-          )}
-        />
+        {loading ? (
+          <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} />
+        ) : filteredItems.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>
+            No items available for this category.
+          </Text>
+        ) : (
+          <FlatList
+            data={getGridData(filteredItems, 3)}
+            numColumns={3}
+            keyExtractor={(_, idx) => idx.toString()}
+            renderItem={({ item }) =>
+              item ? (
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => addToCart(item)}
+                >
+                  <View style={styles.menuItemImagePlaceholder}>
+                    <Icon name="image-outline" size={36} color="#bbb" />
+                  </View>
+                  <Text style={styles.menuItemName}>{item.name}</Text>
+                  <Text style={styles.menuItemPrice}>₹{item.price}</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={[styles.menuItem, { backgroundColor: 'transparent', elevation: 0 }]} />
+              )
+            }
+          />
+        )}
       </View>
 
       {/* Floating Cart */}
       <View style={styles.cart}>
-        <Text style={styles.cartTitle}>Current Order</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.cartTitle}>Current Order</Text>
+          <TouchableOpacity onPress={() => setCartItems([])}>
+            <Icon name="close" size={24} color="#888" />
+          </TouchableOpacity>
+        </View>
         <ScrollView style={styles.cartItems}>
-          {cartItems.map(item => (
+          {cartItems.map((item) => (
             <View key={item.id} style={styles.cartItem}>
-              <Text>{item.name} x {item.quantity}</Text>
+              <Text>
+                {item.name} x {item.quantity}
+              </Text>
               <View style={styles.cartItemActions}>
-                <Text>₹{item.price * item.quantity}</Text>
-                <TouchableOpacity
-                  onPress={() => removeFromCart(item.id)}
-                  style={styles.removeButton}
-                >
-                  <View style={{width: 24, height: 24, backgroundColor: 'red', borderRadius: 12}} />
+                <TouchableOpacity onPress={() => addToCart(item)}>
+                  <Icon name="plus-circle" size={22} color="#4CAF50" />
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => removeFromCart(item.id)}>
+                  <Icon name="minus-circle" size={22} color="#007AFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setCartItems((prev) => prev.filter((i) => i.id !== item.id))}>
+                  <Icon name="delete" size={22} color="#E53935" />
+                </TouchableOpacity>
+                <Text style={{ marginLeft: 10 }}>₹{item.price * item.quantity}</Text>
               </View>
             </View>
           ))}
@@ -357,6 +353,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  menuItemImagePlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
 });
+
+function getGridData<T>(data: T[], numColumns: number): (T | null)[] {
+  const rows = Math.ceil(data.length / numColumns);
+  const filled: (T | null)[] = [...data];
+  while (filled.length < rows * numColumns) {
+    filled.push(null);
+  }
+  return filled;
+}
 
 export default Home;

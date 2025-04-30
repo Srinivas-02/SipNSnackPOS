@@ -52,9 +52,8 @@ const Login = () => {
             });
             console.log('Login successful:', response.data);
             setactiveLocation(response.data.location_id)
-            navigate.navigate('Home')
+            navigate.navigate('StaffLogin')
         } catch (error: any) {
-            console.log('Login failed:', error);
             if (error.response) {
                 setError(error.response.data.message || 'Invalid credentials');
             } else if (error.request) {
