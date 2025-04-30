@@ -7,22 +7,25 @@ interface location{
     state: string
 }
 
-interface ApiResponse {
-    data: location[]
-}
 interface LocationState{
     locations: location[],
-    setLocations: (response: ApiResponse) => void
-
+    activeLocation: location | null,
+    setLocations: (locations: location[]) => void
+    setactiveLocation: (location_id: number) => void
 }
 
 const useLocationStore = create<LocationState>()((set) =>({
     locations: [],
-    setLocations: (response: ApiResponse) => {
-        const locationdata = response.data
+    activeLocation: null,
+    setLocations: (locations: location[]) => {
         set({
-            locations: locationdata
+            locations: locations
         })
+    },
+    setactiveLocation: ( location_id) => {
+        set((state) => ({
+            activeLocation: state.locations.find(location => location.id === location_id) || null
+        }))
     }
 }))
 

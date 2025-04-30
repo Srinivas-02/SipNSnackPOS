@@ -18,41 +18,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import api from '../common/api'
 import useLocationStore from '../store/location'
 
-// Location data with their corresponding passwords
-const LOCATIONS = [
-    { key: 'select', value: 'Select Location', password: '' },
-    { key: 'location1', value: 'San Francisco Store', password: 'admin' },
-    { key: 'location2', value: 'New York Store', password: 'admin' },
-    { key: 'location3', value: 'Chicago Store', password: 'admin' },
-    { key: 'location4', value: 'Los Angeles Store', password: 'admin' },
-    { key: 'location5', value: 'Houston Store', password: 'admin' },
-    { key: 'location6', value: 'Phoenix Store', password: 'admin' },
-    { key: 'location7', value: 'Philadelphia Store', password: 'admin' },
-    { key: 'location8', value: 'San Antonio Store', password: 'admin' },
-    { key: 'location9', value: 'San Diego Store', password: 'admin' },
-    { key: 'location10', value: 'Dallas Store', password: 'admin' },
-    { key: 'location11', value: 'San Jose Store', password: 'admin' },
-    { key: 'location12', value: 'Austin Store', password: 'admin' },
-    { key: 'location13', value: 'Jacksonville Store', password: 'admin' },
-    { key: 'location14', value: 'Fort Worth Store', password: 'admin' },
-    { key: 'location15', value: 'Columbus Store', password: 'admin' },
-    { key: 'location16', value: 'Charlotte Store', password: 'admin' },
-    { key: 'location17', value: 'Indianapolis Store', password: 'admin' },
-    { key: 'location18', value: 'Seattle Store', password: 'admin' },
-    { key: 'location19', value: 'Denver Store', password: 'admin' },
-    { key: 'location20', value: 'Washington DC Store', password: 'admin' },
-    { key: 'location21', value: 'Boston Store', password: 'admin' },
-    { key: 'location22', value: 'Portland Store', password: 'admin' },
-    { key: 'location23', value: 'Las Vegas Store', password: 'admin' },
-    { key: 'location24', value: 'Detroit Store', password: 'admin' },
-    { key: 'location25', value: 'Nashville Store', password: 'admin' },
-];
-
-
 const Login = () => {
     const locations = useLocationStore((state) => state.locations);
     const setLocations = useLocationStore((state) => state.setLocations);
-    const [selectedLocation, setSelectedLocation] = useState('');
+    const setactiveLocation = useLocationStore((state) => state.setactiveLocation)
+    const [selectedLocation, setSelectedLocation] = useState(null);
     const [password, setPassword] = useState('');
     const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [error, setError] = useState('');
@@ -62,23 +32,36 @@ const Login = () => {
             try {
                 const response = await api.get('/locations/');
                 console.log(response.data);
+                setLocations(response.data)
             } catch (error) {
                 console.error('Error fetching locations:', error);
             }
         };
         fetchLocations();
     }, []);
-    const validateLocation = () => {
-        if (!selectedLocation || selectedLocation === 'select') {
+    const validateLocation = async () => {
+        if (!selectedLocation || selectedLocation === null) {
             setError('Please select a location');
             return;
         }
-
-        const location = LOCATIONS.find(loc => loc.key === selectedLocation);
-        if (location && password === location.password) {
-            navigate.replace('Home');
-        } else {
-            setError('Invalid password for selected location');
+        const location = locations.find(loc => loc.id === Number(selectedLocation));
+        try {
+            const response = await api.post('/accounts/login-location/', {
+                location_name: location?.name,
+                location_password: password
+            });
+            console.log('Login successful:', response.data);
+            setactiveLocation(response.data.location_id)
+            navigate.navigate('Home')
+        } catch (error: any) {
+            console.log('Login failed:', error);
+            if (error.response) {
+                setError(error.response.data.message || 'Invalid credentials');
+            } else if (error.request) {
+                setError('No response from server. Please try again.');
+            } else {
+                setError('An error occurred. Please try again.');
+            }
         }
     };
 
@@ -86,7 +69,12 @@ const Login = () => {
         Keyboard.dismiss();
     };
 
-    const isLocationSelected = selectedLocation && selectedLocation !== 'select';
+    const isLocationSelected = selectedLocation && selectedLocation !== null;
+
+    const locationOptions = locations.map(location => ({
+        key: location.id.toString(),
+        value: location.name
+    }));
 
     return (
         <SafeAreaView style={styles.container}>
@@ -104,7 +92,7 @@ const Login = () => {
                         <View style={styles.formContainer}>
                             <SelectList
                                 setSelected={setSelectedLocation}
-                                data={LOCATIONS}
+                                data={locationOptions}
                                 save="key"
                                 placeholder="Select Location"
                                 searchPlaceholder="Search locations..."
