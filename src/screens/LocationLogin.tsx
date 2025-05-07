@@ -18,40 +18,49 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import api from '../common/api'
 import useLocationStore from '../store/location'
 
+interface LocationData {
+    name: string;
+    id: number;
+}
+
 const Login = () => {
-    const locations = useLocationStore((state) => state.locations);
-    const setLocations = useLocationStore((state) => state.setLocations);
-    const setactiveLocation = useLocationStore((state) => state.setactiveLocation)
-    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [locations, setLocations] = useState<LocationData[]>([]);
+    const setactiveLocationId = useLocationStore((state) => state.setactiveLocationId)
+    const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
     const [password, setPassword] = useState('');
     const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [error, setError] = useState('');
     const passwordRef = React.useRef<TextInput>(null);
+
     useEffect(() => {
         const fetchLocations = async () => {
             try {
-                const response = await api.get('/locations/');
-                console.log(response.data);
-                setLocations(response.data)
+                const response = await api.get('/locations/get-location-names/');
+                setLocations(response.data);
+                console.log('Locations fetched:', response.data);
             } catch (error) {
                 console.error('Error fetching locations:', error);
             }
         };
         fetchLocations();
     }, []);
+
     const validateLocation = async () => {
-        if (!selectedLocation || selectedLocation === null) {
+        if (!selectedLocationId) {
             setError('Please select a location');
             return;
         }
-        const location = locations.find(loc => loc.id === Number(selectedLocation));
+
+        const selectedLocation = locations.find(loc => loc.id === selectedLocationId);
+        if (!selectedLocation) return;
+
         try {
             const response = await api.post('/accounts/login-location/', {
-                location_name: location?.name,
+                location_name: selectedLocation.name,
                 location_password: password
             });
             console.log('Login successful:', response.data);
-            setactiveLocation(response.data.location_id)
+            setactiveLocationId(selectedLocationId)
             navigate.navigate('StaffLogin')
         } catch (error: any) {
             if (error.response) {
@@ -68,7 +77,7 @@ const Login = () => {
         Keyboard.dismiss();
     };
 
-    const isLocationSelected = selectedLocation && selectedLocation !== null;
+    const isLocationSelected = selectedLocationId !== null;
 
     const locationOptions = locations.map(location => ({
         key: location.id.toString(),
@@ -90,7 +99,7 @@ const Login = () => {
 
                         <View style={styles.formContainer}>
                             <SelectList
-                                setSelected={setSelectedLocation}
+                                setSelected={(val: string) => setSelectedLocationId(parseInt(val))}
                                 data={locationOptions}
                                 save="key"
                                 placeholder="Select Location"

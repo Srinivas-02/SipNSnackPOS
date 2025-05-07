@@ -9,13 +9,16 @@ interface location{
 
 interface LocationState{
     locations: location[],
+    activeLocationId: number | null,
     activeLocation: location | null,
     setLocations: (locations: location[]) => void
     setactiveLocation: (location_id: number) => void
+    setactiveLocationId: (location_id: number) => void
 }
 
 const useLocationStore = create<LocationState>()((set) =>({
     locations: [],
+    activeLocationId: null,
     activeLocation: null,
     setLocations: (locations: location[]) => {
         set({
@@ -26,6 +29,11 @@ const useLocationStore = create<LocationState>()((set) =>({
         set((state) => ({
             activeLocation: state.locations.find(location => location.id === location_id) || null
         }))
+    },
+    setactiveLocationId: (location_id: number) => {
+        set({
+            activeLocationId: location_id
+        })
     }
 }))
 

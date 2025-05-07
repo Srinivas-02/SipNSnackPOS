@@ -8,10 +8,11 @@ import useLocationStore from '../store/location'
 import useAccountStore from '../store/account'
 import useMenuStore from '../store/menu'
 const StaffLogin = () => {
-  const activeLocationid = useLocationStore((state) => state.activeLocation?.id)
+  const activeLocationid = useLocationStore((state) => state.activeLocationId)
   const setAccountDetails = useAccountStore((state) => state.setDetails)
   const setCategories = useMenuStore((state) => state.setCategories)
   const setMenuItems = useMenuStore((state) => state.setMenuItems)
+  const setLocations = useLocationStore((state) => state.setLocations)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,29 +24,44 @@ const StaffLogin = () => {
       return;
     }
     try{
+      console.log('Attempting login... with email:', email, 'and password:', password, 'and location_id:', activeLocationid);
       const response = await api.post('accounts/login/', {
         email,password, location_id : activeLocationid
       })  
-      console.log(response.data)
+      console.log('Login successful:', response.data);
       setAccountDetails(response.data)
+
+      console.log('Fetching locations...');
+      const locationresponse = await api.get('/locations/')
+      console.log('Locations data:', locationresponse.data);
+      setLocations(locationresponse.data)
+
+      console.log('Fetching categories...');
       const categorieresponse = await api.get('/menu/categories/')
+      console.log('Categories data:', categorieresponse.data);
       setCategories(categorieresponse.data)
+
+      console.log('Fetching menu items...');
       const menuitemresponse = await api.get('/menu/menu-items/')
+      console.log('Menu items data:', menuitemresponse.data);
       setMenuItems(menuitemresponse.data)
 
+      setError('');
+      navigation.navigate('Home');
     }
    catch (error: any) {
+    console.error('Login error:', error);
     if (error.response) {
+        console.error('Error response:', error.response.data);
         setError(error.response.data.message || 'Invalid credentials');
     } else if (error.request) {
+        console.error('No response received');
         setError('No response from server. Please try again.');
     } else {
+        console.error('Error:', error.message);
         setError('An error occurred. Please try again.');
     }
 }
-    
-    setError('');
-    navigation.navigate('Home');
   };
 
   const dismissKeyboard = () => {

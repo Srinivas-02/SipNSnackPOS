@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Alert } from 'react-native';
 import MenuOverlay from '../components/MenuOverlay';
 import useMenuStore from '../store/menu';
+import useOrdersStore, { CartItem } from '../store/orders';
 import api from '../common/api';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // Add this at the very top of the file to fix the linter error for the icon import
@@ -20,64 +21,93 @@ interface MenuItem {
   location_id: number;
 }
 
-interface CartItem extends MenuItem {
-  quantity: number;
-}
-
 const Home = () => {
   const categories = useMenuStore((state) => state.categories);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Get cart and order functions from store
+  const { 
+    currentCart: cartItems, 
+    addToCart, 
+    removeFromCart, 
+    clearCart, 
+    placeOrder, 
+    isLoading: orderLoading 
+  } = useOrdersStore();
+  
   // Find menu items for the selected category
   const filteredItems =
     categories.find((cat) => cat.name === selectedCategory)?.menu_items || [];
-  useEffect(()=>{
-    setSelectedCategory(categories[0].name)
-  })
-  const addToCart = (item: MenuItem) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((cartItem) => cartItem.id === item.id);
-      if (existingItem) {
-        return prevItems.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      }
-      return [...prevItems, { ...item, quantity: 1 }];
-    });
+  
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0].name);
+    }
+  }, [categories, selectedCategory]);
+  
+  const handleAddToCart = (item: MenuItem) => {
+    addToCart(item);
   };
-
-  const removeFromCart = (itemId: number) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === itemId);
-      if (existingItem && existingItem.quantity > 1) {
-        return prevItems.map((item) =>
-          item.id === itemId
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        );
-      }
-      return prevItems.filter((item) => item.id !== itemId);
-    });
+  
+  const handleRemoveFromCart = (itemId: number) => {
+    removeFromCart(itemId);
   };
+  
+  const handlePlaceOrder = async () => {
+    if (cartItems.length === 0) {
+      Alert.alert('Error', 'Your cart is empty');
+      return;
+    }
 
-  const placeOrder = async () => {
     try {
-      // Here you would make an API call to your backend
-      // await api.sendOrder(cartItems);
-      setCartItems([]); // Clear cart after successful order
-      Alert.alert('Success', 'Order placed successfully!');
+      setLoading(true);
+      
+      // Get the current location ID from the first menu item
+      const location_id = cartItems[0].location_id;
+      
+      // Call the placeOrder function from the store
+      const result = await placeOrder(location_id);
+      
+      if (result) {
+        // Show success message with order number
+        Alert.alert(
+          'Order Placed!', 
+          `Order #${result.order_number} has been placed successfully.\nTotal: ₹${result.total_amount}`,
+          [
+            { 
+              text: 'View Receipt',
+              onPress: () => {
+                // In a real app, you'd navigate to a receipt screen or open a webview
+                const itemsList = result.order_items.map(
+                  (item: any) => `${item.quantity}x Item #${item.menu_item_id} (₹${item.price})`
+                ).join('\n');
+                
+                Alert.alert(
+                  'Receipt', 
+                  `Order #${result.order_number}\n\nItems:\n${itemsList}\n\nTotal: ₹${result.total_amount}`
+                );
+              }
+            },
+            { text: 'OK' }
+          ]
+        );
+      } else {
+        throw new Error('Order failed to be created');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to place order');
+      console.error('Failed to place order:', error);
+      Alert.alert('Error', 'Failed to place order. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
+  
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -129,7 +159,7 @@ const Home = () => {
 
       {/* Menu Items Area */}
       <View style={styles.menuContainer}>
-        {loading ? (
+        {loading || orderLoading ? (
           <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} />
         ) : filteredItems.length === 0 ? (
           <Text style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>
@@ -144,7 +174,7 @@ const Home = () => {
               item ? (
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={() => addToCart(item)}
+                  onPress={() => handleAddToCart(item)}
                 >
                   <View style={styles.menuItemImagePlaceholder}>
                     <Icon name="image-outline" size={36} color="#bbb" />
@@ -164,7 +194,7 @@ const Home = () => {
       <View style={styles.cart}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={styles.cartTitle}>Current Order</Text>
-          <TouchableOpacity onPress={() => setCartItems([])}>
+          <TouchableOpacity onPress={() => clearCart()}>
             <Icon name="close" size={24} color="#888" />
           </TouchableOpacity>
         </View>
@@ -175,13 +205,13 @@ const Home = () => {
                 {item.name} x {item.quantity}
               </Text>
               <View style={styles.cartItemActions}>
-                <TouchableOpacity onPress={() => addToCart(item)}>
+                <TouchableOpacity onPress={() => handleAddToCart(item)}>
                   <Icon name="plus-circle" size={22} color="#4CAF50" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => removeFromCart(item.id)}>
+                <TouchableOpacity onPress={() => handleRemoveFromCart(item.id)}>
                   <Icon name="minus-circle" size={22} color="#007AFF" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setCartItems((prev) => prev.filter((i) => i.id !== item.id))}>
+                <TouchableOpacity onPress={() => clearCart()}>
                   <Icon name="delete" size={22} color="#E53935" />
                 </TouchableOpacity>
                 <Text style={{ marginLeft: 10 }}>₹{item.price * item.quantity}</Text>
@@ -193,7 +223,7 @@ const Home = () => {
           <Text style={styles.total}>Total: ₹{calculateTotal()}</Text>
           <TouchableOpacity
             style={styles.placeOrderButton}
-            onPress={placeOrder}
+            onPress={handlePlaceOrder}
             disabled={cartItems.length === 0}
           >
             <Text style={styles.placeOrderText}>Place Order</Text>
