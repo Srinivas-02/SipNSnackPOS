@@ -1,8 +1,9 @@
 import React from 'react';
 import LogoSplash from './src/screens/LogoSplash';
-import LocationLogin from './src/screens/LocationLogin';
 import Home from './src/screens/Home';
 import StaffLogin from './src/screens/StaffLogin';
+import LocationSelector from './src/screens/LocationSelector';
+import PrinterSettings from './src/screens/PrinterSettings';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './src/types/navigation';
@@ -26,15 +27,15 @@ const App = () => {
           }}
         />
         <Stack.Screen
-          component={LocationLogin}
-          name="LocationLogin"
+          component={StaffLogin}
+          name="StaffLogin"
           options={{
             animation: 'fade',
           }}
         />
         <Stack.Screen
-          component={StaffLogin}
-          name="StaffLogin"
+          component={LocationSelector}
+          name="LocationSelector"
           options={{
             animation: 'fade',
           }}
@@ -48,6 +49,13 @@ const App = () => {
               backgroundColor: '#F0F8FF',
             },
             headerTintColor: '#000',
+          }}
+        />
+        <Stack.Screen
+          component={PrinterSettings}
+          name="PrinterSettings"
+          options={{
+            headerShown: false,
           }}
         />
       </Stack.Navigator>

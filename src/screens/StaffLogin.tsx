@@ -3,16 +3,19 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingVi
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import api from '../common/api'
-import useLocationStore from '../store/location'
-import useAccountStore from '../store/account'
-import useMenuStore from '../store/menu'
+import api, { setAuthTokens } from '../common/api';
+import useLocationStore from '../store/location';
+import useAccountStore from '../store/account';
+import useMenuStore from '../store/menu';
+
 const StaffLogin = () => {
-  const activeLocationid = useLocationStore((state) => state.activeLocationId)
-  const setAccountDetails = useAccountStore((state) => state.setDetails)
-  const setCategories = useMenuStore((state) => state.setCategories)
-  const setMenuItems = useMenuStore((state) => state.setMenuItems)
-  const setLocations = useLocationStore((state) => state.setLocations)
+  const setAccountDetails = useAccountStore((state) => state.setDetails);
+  const setCategories = useMenuStore((state) => state.setCategories);
+  const setMenuItems = useMenuStore((state) => state.setMenuItems);
+  const setLocations = useLocationStore((state) => state.setLocations);
+  const setactiveLocationId = useLocationStore((state) => state.setactiveLocationId);
+  const setactiveLocation = useLocationStore((state) => state.setactiveLocation);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,31 +27,43 @@ const StaffLogin = () => {
       return;
     }
     try{
-      console.log('Attempting login... with email:', email, 'and password:', password, 'and location_id:', activeLocationid);
+      console.log('Attempting login... with email:', email, 'and password:', password);
       const response = await api.post('accounts/login/', {
-        email,password, location_id : activeLocationid
-      })  
+        email, password
+      });
       console.log('Login successful:', response.data);
-      setAccountDetails(response.data)
-
-      console.log('Fetching locations...');
-      const locationresponse = await api.get('/locations/')
-      console.log('Locations data:', locationresponse.data);
-      setLocations(locationresponse.data)
-
-      console.log('Fetching categories...');
-      const categorieresponse = await api.get('/menu/categories/')
-      console.log('Categories data:', categorieresponse.data);
-      setCategories(categorieresponse.data)
-
-      console.log('Fetching menu items...');
-      const menuitemresponse = await api.get('/menu/menu-items/')
-      console.log('Menu items data:', menuitemresponse.data);
-      setMenuItems(menuitemresponse.data)
-
-      setError('');
-      navigation.navigate('Home');
+      
+      // Store the access and refresh tokens
+      if (response.data.access && response.data.refresh) {
+        await setAuthTokens(response.data.access, response.data.refresh);
+      }
+      
+      setAccountDetails(response.data.user);
+      
+      // Set locations from the login response
+      if (response.data.locations && response.data.locations.length > 0) {
+        console.log('Setting locations from login response:', response.data.locations);
+        setLocations(response.data.locations);
+        
+        // If there's only one location, set it as active and go to Home
+        if (response.data.locations.length === 1) {
+          const location = response.data.locations[0];
+          setactiveLocationId(location.id);
+          setactiveLocation(location.id);
+          
+          // Fetch categories and menu items for this location
+          await fetchMenuData(location.id);
+          
+          navigation.navigate('Home');
+        } else {
+          // If there are multiple locations, navigate to location selector
+          navigation.navigate('LocationSelector');
+        }
+      } else {
+        setError('No locations associated with this account');
+      }
     }
+   // eslint-disable-next-line no-catch-shadow
    catch (error: any) {
     console.error('Login error:', error);
     if (error.response) {
@@ -61,7 +76,23 @@ const StaffLogin = () => {
         console.error('Error:', error.message);
         setError('An error occurred. Please try again.');
     }
-}
+  }
+  };
+
+  const fetchMenuData = async (locationId: number) => {
+    try {
+      console.log('Fetching categories for location:', locationId);
+      const categorieresponse = await api.get(`/menu/categories/?location_id=${locationId}`);
+      console.log('Categories data:', categorieresponse.data);
+      setCategories(categorieresponse.data);
+
+      console.log('Fetching menu items for location:', locationId);
+      const menuitemresponse = await api.get(`/menu/menu-items/?location_id=${locationId}`);
+      console.log('Menu items data:', menuitemresponse.data);
+      setMenuItems(menuitemresponse.data);
+    } catch (error) {
+      console.error('Error fetching menu data:', error);
+    }
   };
 
   const dismissKeyboard = () => {

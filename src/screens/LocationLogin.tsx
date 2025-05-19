@@ -15,8 +15,8 @@ import {
 import { SelectList } from 'react-native-dropdown-select-list';
 import { RootStackParamList } from '../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import api from '../common/api'
-import useLocationStore from '../store/location'
+import api from '../common/api';
+import useLocationStore from '../store/location';
 
 interface LocationData {
     name: string;
@@ -25,7 +25,7 @@ interface LocationData {
 
 const Login = () => {
     const [locations, setLocations] = useState<LocationData[]>([]);
-    const setactiveLocationId = useLocationStore((state) => state.setactiveLocationId)
+    const setactiveLocationId = useLocationStore((state) => state.setactiveLocationId);
     const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
     const [password, setPassword] = useState('');
     const navigate = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -52,16 +52,16 @@ const Login = () => {
         }
 
         const selectedLocation = locations.find(loc => loc.id === selectedLocationId);
-        if (!selectedLocation) return;
+        if (!selectedLocation) {return;}
 
         try {
             const response = await api.post('/accounts/login-location/', {
                 location_name: selectedLocation.name,
-                location_password: password
+                location_password: password,
             });
             console.log('Login successful:', response.data);
-            setactiveLocationId(selectedLocationId)
-            navigate.navigate('StaffLogin')
+            setactiveLocationId(selectedLocationId);
+            navigate.navigate('StaffLogin');
         } catch (error: any) {
             if (error.response) {
                 setError(error.response.data.message || 'Invalid credentials');
@@ -81,7 +81,7 @@ const Login = () => {
 
     const locationOptions = locations.map(location => ({
         key: location.id.toString(),
-        value: location.name
+        value: location.name,
     }));
 
     return (

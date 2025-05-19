@@ -1,7 +1,7 @@
-import {create} from 'zustand'
+import {create} from 'zustand';
 import api from '../common/api';
 
-interface user {
+interface User {
     id: number,
     email: string,
     first_name: string,
@@ -11,31 +11,16 @@ interface user {
     is_staff_member: boolean
 }
 
-interface ApiResponse {
-    refresh : string,
-    access: string,
-    user: user
-}
-
 interface AccountState {
-    refresh_token : string | null,
-    access_token: string | null,
-    user: user | null,
-    setDetails: (response : ApiResponse) => void,
+    user: User | null,
+    setDetails: (user: User) => void,
 }
 
 const useAccountStore = create<AccountState>()((set) => ({
-    refresh_token: null,
-    access_token: null,
     user: null,
-    setDetails: (response : ApiResponse) =>{
-        api.defaults.headers.common['Authorization'] = `Bearer ${response.access}`;
-        set({
-            refresh_token: response.refresh,
-            access_token: response.access,
-            user: response.user
-        });
-    }
-}))
+    setDetails: (user: User) => {
+        set({ user });
+    },
+}));
 
-export default useAccountStore
+export default useAccountStore;

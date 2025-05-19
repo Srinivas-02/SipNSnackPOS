@@ -1,4 +1,4 @@
-import {create} from 'zustand'
+import {create} from 'zustand';
 
 interface location{
     id: number,
@@ -22,19 +22,19 @@ const useLocationStore = create<LocationState>()((set) =>({
     activeLocation: null,
     setLocations: (locations: location[]) => {
         set({
-            locations: locations
-        })
+            locations: locations,
+        });
     },
     setactiveLocation: ( location_id) => {
         set((state) => ({
-            activeLocation: state.locations.find(location => location.id === location_id) || null
-        }))
+            activeLocation: state.locations.find(location => location.id === location_id) || null,
+        }));
     },
     setactiveLocationId: (location_id: number) => {
         set({
-            activeLocationId: location_id
-        })
-    }
-}))
+            activeLocationId: location_id,
+        });
+    },
+}));
 
-export default useLocationStore
+export default useLocationStore;

@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
 interface category{
     id: number,
@@ -35,15 +35,15 @@ const useMenuStore = create<menuState>()((set) => ({
         set(() => ({
             categories: response.categories.map(cat => ({
                 ...cat,
-                menu_items: []
-            }))
-        }))
+                menu_items: [],
+            })),
+        }));
     },
     setMenuItems: (response: MenuitemApiResponse) => {
         set((state) => {
             const categories: category[] = state.categories.map(cat => ({
                 ...cat,
-                menu_items: []
+                menu_items: [],
             }));
 
             response.menu_items.forEach(item => {
@@ -52,10 +52,10 @@ const useMenuStore = create<menuState>()((set) => ({
                     category.menu_items.push(item);
                 }
             });
-            console.log('\n\n the categories are ', categories)
+            console.log('\n\n the categories are ', categories);
             return { categories };
         });
-    }
-}))
+    },
+}));
 
-export default useMenuStore
+export default useMenuStore;

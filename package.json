@@ -6,10 +6,12 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
+    "lint:fix": "node fix-lint.js",
     "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/elements": "^2.3.1",
     "@react-navigation/native": "^7.0.19",
@@ -18,6 +20,7 @@
     "axios": "^1.9.0",
     "react": "^19.0.0",
     "react-native": "0.78.1",
+    "react-native-bluetooth-escpos-printer": "github:januslo/react-native-bluetooth-escpos-printer",
     "react-native-dropdown-select-list": "^2.0.5",
     "react-native-safe-area-context": "^5.3.0",
     "react-native-screens": "^4.9.2",

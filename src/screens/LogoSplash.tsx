@@ -1,21 +1,32 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Animated, Easing, useWindowDimensions } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation'
+import { RootStackParamList } from '../types/navigation';
+import { initializeBluetoothService } from '../services/BluetoothService';
+import { useBluetoothStore } from '../store/bluetoothStore';
 
 const Logo = require('../assets/Logo.png');
 
 const LogoSplash = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const setPermissionsGranted = useBluetoothStore(state => state.setPermissionsGranted);
 
-  // Animations
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.3);
-  const translateYAnim = new Animated.Value(0);
+  // Animations using useRef to avoid recreation on each render
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.3)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Initialize Bluetooth on app start
+    const initBluetooth = async () => {
+      const result = await initializeBluetoothService();
+      setPermissionsGranted(result);
+    };
+
+    initBluetooth();
+
     // Initial pause before animation starts
     const initialDelay = 300;
 
@@ -59,11 +70,11 @@ const LogoSplash = () => {
 
     // Navigate to Login screen after animation
     const navigationTimeout = setTimeout(() => {
-      navigation.replace('LocationLogin');
+      navigation.replace('StaffLogin');
     }, 2800); // Increased duration to accommodate new animations
 
     return () => clearTimeout(navigationTimeout);
-  });
+  }, [fadeAnim, navigation, scaleAnim, setPermissionsGranted, translateYAnim]);
 
   const logoSize = Math.min(screenWidth * 0.4, screenHeight * 0.4);
 

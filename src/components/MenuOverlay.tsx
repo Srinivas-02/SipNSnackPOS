@@ -3,10 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  Animated,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
+import { colors, globalStyles } from '../common/styles';
 
 interface MenuOverlayProps {
   isVisible: boolean;
@@ -29,12 +28,12 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isVisible, onClose }) => {
           <TouchableOpacity style={styles.closeArea} onPress={onClose} />
           <View style={styles.menu}>
             <View style={styles.header}>
-              <Text style={styles.headerText}>Menu</Text>
+              <Text style={[globalStyles.heading, styles.headerText]}>Menu</Text>
             </View>
             {menuItems.map((item) => (
               <TouchableOpacity key={item.id} style={styles.menuItem}>
                 <Text style={styles.menuItemIcon}>{item.icon}</Text>
-                <Text style={styles.menuItemText}>{item.title}</Text>
+                <Text style={[globalStyles.text, styles.menuItemText]}>{item.title}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -60,25 +59,24 @@ const styles = StyleSheet.create({
   },
   menu: {
     width: 280,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     height: '100%',
     paddingTop: 50,
   },
   header: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
   headerText: {
     fontSize: 24,
-    fontWeight: 'bold',
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   menuItemIcon: {
     fontSize: 20,
@@ -86,8 +84,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    color: '#333',
   },
 });
 
-export default MenuOverlay; 
+export default MenuOverlay;
